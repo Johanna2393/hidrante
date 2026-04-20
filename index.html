@@ -1,19 +1,13 @@
-
-# Crear archivo HTML optimizado para la capa de hidrantes
-html_content = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Hidrantes - CFU</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    
-    <!-- Leaflet MarkerCluster CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.Default.min.css" />
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visor de Hidrantes - Móvil</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
         * {
             margin: 0;
@@ -22,360 +16,685 @@ html_content = '''<!DOCTYPE html>
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
         }
         
         #map {
+            width: 100vw;
             height: 100vh;
-            width: 100%;
+            z-index: 1;
         }
         
-        .control-panel {
-            position: absolute;
+        /* Barra de búsqueda superior */
+        .search-container {
+            position: fixed;
             top: 10px;
+            left: 10px;
             right: 10px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
-            max-width: 300px;
-            max-height: 80vh;
-            overflow-y: auto;
-            font-size: 12px;
+            display: flex;
+            gap: 8px;
         }
         
-        .control-panel h3 {
-            margin-bottom: 10px;
+        .search-box {
+            flex: 1;
+            display: flex;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        #searchInput {
+            flex: 1;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            outline: none;
+            min-width: 0;
+        }
+        
+        #searchBtn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #searchBtn:active {
+            background: #c0392b;
+        }
+        
+        /* Botón de menú */
+        .menu-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 18px;
             color: #333;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 8px;
+        }
+        
+        .menu-btn:active {
+            background: #f0f0f0;
+        }
+        
+        /* Panel lateral */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            z-index: 1001;
+            transition: right 0.3s ease;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+            overflow-y: auto;
+        }
+        
+        .side-panel.open {
+            right: 0;
+        }
+        
+        .panel-header {
+            background: #e74c3c;
+            color: white;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .panel-header h3 {
+            font-size: 18px;
+        }
+        
+        .close-panel {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .panel-content {
+            padding: 15px;
         }
         
         .stat-item {
-            margin: 8px 0;
-            padding: 8px;
-            background: #f9f9f9;
-            border-left: 3px solid #007bff;
-            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
         }
         
-        .stat-item strong {
-            color: #007bff;
+        .stat-label {
+            color: #666;
+            font-size: 14px;
         }
         
-        .error-item {
-            background: #ffe6e6;
-            border-left-color: #dc3545;
-            color: #721c24;
+        .stat-value {
+            font-weight: bold;
+            color: #333;
         }
         
-        .success-item {
-            background: #e6ffe6;
-            border-left-color: #28a745;
-            color: #155724;
+        /* Resultados de búsqueda */
+        .search-results {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            right: 10px;
+            max-height: 50vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+            z-index: 999;
+            overflow-y: auto;
+            display: none;
         }
         
-        .warning-item {
-            background: #fff3e6;
-            border-left-color: #ffc107;
-            color: #856404;
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .leaflet-popup-content {
-            font-size: 13px;
+        .result-item:active {
+            background: #f5f5f5;
         }
         
-        .leaflet-popup-content p {
-            margin: 5px 0;
+        .result-icon {
+            width: 40px;
+            height: 40px;
+            background: #e74c3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .result-info {
+            flex: 1;
+        }
+        
+        .result-code {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .result-coords {
+            color: #888;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+        }
+        
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .overlay.show {
+            display: block;
+        }
+        
+        /* Botones flotantes */
+        .float-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 15px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .float-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .float-btn.location {
+            background: #3498db;
+            color: white;
+        }
+        
+        .float-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Popup personalizado */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+        }
+        
+        .popup-content {
+            padding: 5px;
         }
         
         .popup-title {
+            font-size: 18px;
             font-weight: bold;
-            color: #007bff;
+            color: #e74c3c;
             margin-bottom: 8px;
-        }
-        
-        .legend {
-            position: absolute;
-            bottom: 20px;
-            right: 10px;
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 999;
-            font-size: 12px;
-        }
-        
-        .legend-item {
             display: flex;
             align-items: center;
-            margin: 5px 0;
+            gap: 8px;
         }
         
-        .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin-right: 8px;
+        .popup-detail {
+            font-size: 13px;
+            color: #555;
+            margin: 4px 0;
         }
         
+        .popup-nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+        }
+        
+        /* Loading */
         .loading {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 25px 35px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             z-index: 2000;
             text-align: center;
         }
         
-        .spinner {
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #007bff;
+            border-top: 4px solid #e74c3c;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
         }
         
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Contador de resultados */
+        .results-count {
+            padding: 10px 15px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    
-    <div class="control-panel" id="controlPanel">
-        <h3>📊 Información del Mapa</h3>
-        <div id="stats"></div>
-    </div>
-    
-    <div class="legend" id="legend">
-        <h4 style="margin-bottom: 8px; color: #333;">Leyenda</h4>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #FF6B6B;"></div>
-            <span>Hidrante</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #4ECDC4;"></div>
-            <span>Cluster</span>
-        </div>
-    </div>
-    
+    <!-- Loading -->
     <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Cargando hidrantes...</p>
+        <div class="loading-spinner"></div>
+        <div>Cargando hidrantes...</div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    
-    <!-- Leaflet MarkerCluster JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.min.js"></script>
+    <!-- Barra de búsqueda -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar código de hidrante..." autocomplete="off">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+        <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+    </div>
 
+    <!-- Resultados de búsqueda -->
+    <div class="search-results" id="searchResults">
+        <div class="results-count" id="resultsCount"></div>
+        <div id="resultsList"></div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Panel lateral -->
+    <div class="side-panel" id="sidePanel">
+        <div class="panel-header">
+            <h3><i class="fas fa-fire-extinguisher"></i> Información</h3>
+            <button class="close-panel" id="closePanel">&times;</button>
+        </div>
+        <div class="panel-content">
+            <div class="stat-item">
+                <span class="stat-label">Total Hidrantes</span>
+                <span class="stat-value" id="totalCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Cargados</span>
+                <span class="stat-value" id="loadedCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Con Errores</span>
+                <span class="stat-value" id="errorCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Porcentaje</span>
+                <span class="stat-value" id="percentage">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones flotantes -->
+    <div class="float-buttons">
+        <button class="float-btn location" id="locationBtn" title="Mi ubicación">
+            <i class="fas fa-location-crosshairs"></i>
+        </button>
+        <button class="float-btn" id="zoomInBtn">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button class="float-btn" id="zoomOutBtn">
+            <i class="fas fa-minus"></i>
+        </button>
+    </div>
+
+    <!-- Mapa -->
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script>
-        // Inicializar mapa
-        const map = L.map('map').setView([-12.0464, -77.0428], 12);
-        
-        // Agregar capa base
+        // Inicializar mapa centrado en Lima
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([-12.0464, -77.0428], 14);
+
+        // Capa base
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
+            attribution: '© OpenStreetMap'
         }).addTo(map);
-        
-        // Variables de estadísticas
+
+        // Cluster de marcadores
+        const markers = L.markerClusterGroup({
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false
+        });
+
+        // Icono personalizado para hidrantes
+        const hydrantIcon = L.divIcon({
+            html: '<div style="background:#e74c3c;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);">H</div>',
+            className: 'hydrant-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+        });
+
+        // Icono para hidrante seleccionado
+        const selectedIcon = L.divIcon({
+            html: '<div style="background:#27ae60;color:white;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.4);animation:pulse 1s infinite;">H</div>',
+            className: 'hydrant-marker-selected',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
+        // Almacenar datos de hidrantes
+        let hydrantsData = [];
+        let hydrantMarkers = {};
+        let selectedMarker = null;
+
+        // Estadísticas
         let stats = {
-            totalHidrantes: 0,
-            cargados: 0,
-            errores: 0,
-            coordenadas_invalidas: 0,
-            detalles_errores: []
+            total: 0,
+            loaded: 0,
+            errors: 0
         };
-        
-        // Crear grupo de clusters
-        const markerClusterGroup = L.markerClusterGroup({
-            maxClusterRadius: 80,
-            iconCreateFunction: function(cluster) {
-                const count = cluster.getChildCount();
-                let size = 'small';
-                let color = '#4ECDC4';
-                
-                if (count > 100) {
-                    size = 'large';
-                    color = '#FF6B6B';
-                } else if (count > 50) {
-                    size = 'medium';
-                    color = '#FFA07A';
-                }
-                
-                return L.divIcon({
-                    html: `<div style="background: ${color}; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${count}</div>`,
-                    iconSize: [40, 40],
-                    className: 'cluster-icon'
-                });
-            }
-        });
-        
-        // Icono para hidrantes
-        const hidrante_icon = L.divIcon({
-            html: `<div style="background: #FF6B6B; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                <span style="color: white; font-size: 12px; font-weight: bold;">H</span>
-            </div>`,
-            iconSize: [24, 24],
-            className: 'hidrante-icon'
-        });
-        
+
         // Cargar GeoJSON
-        fetch('https://johanna2393.github.io/hidrante/hidrante.geojson')
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
+        fetch('hidrantes_corregido.geojson')
+            .then(response => response.json())
             .then(data => {
-                console.log('GeoJSON cargado:', data);
-                stats.totalHidrantes = data.features ? data.features.length : 0;
+                stats.total = data.features.length;
                 
-                if (!data.features || data.features.length === 0) {
-                    throw new Error('No hay features en el GeoJSON');
-                }
-                
-                // Procesar cada feature
                 data.features.forEach((feature, index) => {
                     try {
-                        const geometry = feature.geometry;
-                        let coords = null;
+                        let coords;
+                        const geom = feature.geometry;
                         
-                        // Manejar diferentes tipos de geometría
-                        if (geometry.type === 'Point') {
-                            coords = geometry.coordinates;
-                        } else if (geometry.type === 'MultiPoint' && geometry.coordinates.length > 0) {
-                            coords = geometry.coordinates[0];
+                        if (geom.type === 'Point') {
+                            coords = geom.coordinates;
+                        } else if (geom.type === 'MultiPoint') {
+                            coords = geom.coordinates[0];
                         }
                         
-                        if (!coords || coords.length < 2) {
-                            stats.errores++;
-                            stats.coordenadas_invalidas++;
-                            stats.detalles_errores.push(`Feature ${index}: Coordenadas inválidas`);
-                            return;
+                        if (coords && coords.length >= 2) {
+                            const lat = coords[1];
+                            const lng = coords[0];
+                            
+                            if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                                // Obtener código del hidrante
+                                const props = feature.properties || {};
+                                const codigo = props.CODIGO || props.codigo || props.COD || props.cod || 
+                                              props.ID || props.id || props.OBJECTID || `HID-${index + 1}`;
+                                
+                                // Crear popup
+                                const popupContent = `
+                                    <div class="popup-content">
+                                        <div class="popup-title">
+                                            <i class="fas fa-fire-extinguisher"></i>
+                                            ${codigo}
+                                        </div>
+                                        <div class="popup-detail"><b>Latitud:</b> ${lat.toFixed(6)}</div>
+                                        <div class="popup-detail"><b>Longitud:</b> ${lng.toFixed(6)}</div>
+                                        ${Object.keys(props).slice(0, 5).map(key => 
+                                            `<div class="popup-detail"><b>${key}:</b> ${props[key]}</div>`
+                                        ).join('')}
+                                        <button class="popup-nav-btn" onclick="navigateTo(${lat}, ${lng})">
+                                            <i class="fas fa-directions"></i> Navegar
+                                        </button>
+                                    </div>
+                                `;
+                                
+                                const marker = L.marker([lat, lng], { icon: hydrantIcon })
+                                    .bindPopup(popupContent);
+                                
+                                markers.addLayer(marker);
+                                
+                                // Guardar referencia
+                                hydrantsData.push({
+                                    codigo: String(codigo).toUpperCase(),
+                                    lat: lat,
+                                    lng: lng,
+                                    marker: marker,
+                                    props: props
+                                });
+                                
+                                hydrantMarkers[codigo] = marker;
+                                stats.loaded++;
+                            } else {
+                                stats.errors++;
+                            }
+                        } else {
+                            stats.errors++;
                         }
-                        
-                        // Validar coordenadas
-                        const lon = parseFloat(coords[0]);
-                        const lat = parseFloat(coords[1]);
-                        
-                        if (isNaN(lon) || isNaN(lat) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-                            stats.errores++;
-                            stats.coordenadas_invalidas++;
-                            stats.detalles_errores.push(`Feature ${index}: Lat/Lon fuera de rango`);
-                            return;
-                        }
-                        
-                        // Crear popup
-                        let popupContent = '<div class="popup-title">🚨 Hidrante</div>';
-                        popupContent += `<p><strong>Latitud:</strong> ${lat.toFixed(6)}</p>`;
-                        popupContent += `<p><strong>Longitud:</strong> ${lon.toFixed(6)}</p>`;
-                        
-                        if (feature.properties) {
-                            Object.keys(feature.properties).forEach(key => {
-                                const value = feature.properties[key];
-                                if (value) {
-                                    popupContent += `<p><strong>${key}:</strong> ${value}</p>`;
-                                }
-                            });
-                        }
-                        
-                        // Crear marcador
-                        const marker = L.marker([lat, lon], { icon: hidrante_icon })
-                            .bindPopup(popupContent);
-                        
-                        markerClusterGroup.addLayer(marker);
-                        stats.cargados++;
-                        
-                    } catch (error) {
-                        stats.errores++;
-                        stats.detalles_errores.push(`Feature ${index}: ${error.message}`);
-                        console.error(`Error procesando feature ${index}:`, error);
+                    } catch (e) {
+                        stats.errors++;
                     }
                 });
                 
-                // Agregar grupo al mapa
-                map.addLayer(markerClusterGroup);
-                
-                // Actualizar estadísticas
-                actualizarEstadisticas();
-                
-                // Ocultar loading
+                map.addLayer(markers);
+                updateStats();
                 document.getElementById('loading').style.display = 'none';
-                
             })
             .catch(error => {
-                console.error('Error cargando GeoJSON:', error);
-                stats.detalles_errores.push(`Error general: ${error.message}`);
-                actualizarEstadisticas();
-                document.getElementById('loading').style.display = 'none';
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div style="color:#e74c3c;font-size:40px;margin-bottom:15px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>Error al cargar datos</div>
+                    <div style="font-size:12px;color:#888;margin-top:5px;">
+                        Verifica que el archivo GeoJSON esté en la misma carpeta
+                    </div>
+                `;
             });
-        
-        // Función para actualizar estadísticas
-        function actualizarEstadisticas() {
-            const statsDiv = document.getElementById('stats');
-            let html = '';
-            
-            html += `<div class="stat-item success-item">
-                <strong>✅ Total de Hidrantes:</strong> ${stats.totalHidrantes}
-            </div>`;
-            
-            html += `<div class="stat-item success-item">
-                <strong>✅ Cargados:</strong> ${stats.cargados}
-            </div>`;
-            
-            if (stats.errores > 0) {
-                html += `<div class="stat-item error-item">
-                    <strong>❌ Errores:</strong> ${stats.errores}
-                </div>`;
-            }
-            
-            if (stats.coordenadas_invalidas > 0) {
-                html += `<div class="stat-item warning-item">
-                    <strong>⚠️ Coordenadas Inválidas:</strong> ${stats.coordenadas_invalidas}
-                </div>`;
-            }
-            
-            html += `<div class="stat-item">
-                <strong>📍 Porcentaje Cargado:</strong> ${((stats.cargados / stats.totalHidrantes) * 100).toFixed(1)}%
-            </div>`;
-            
-            if (stats.detalles_errores.length > 0 && stats.detalles_errores.length <= 5) {
-                html += `<div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
-                    <strong>Detalles de Errores:</strong>
-                    <ul style="margin-left: 15px; margin-top: 5px;">`;
-                stats.detalles_errores.slice(0, 5).forEach(error => {
-                    html += `<li style="color: #dc3545; font-size: 11px;">${error}</li>`;
-                });
-                html += `</ul></div>`;
-            }
-            
-            statsDiv.innerHTML = html;
+
+        // Actualizar estadísticas
+        function updateStats() {
+            document.getElementById('totalCount').textContent = stats.total.toLocaleString();
+            document.getElementById('loadedCount').textContent = stats.loaded.toLocaleString();
+            document.getElementById('errorCount').textContent = stats.errors.toLocaleString();
+            document.getElementById('percentage').textContent = 
+                ((stats.loaded / stats.total) * 100).toFixed(1) + '%';
         }
-        
-        // Controles del mapa
-        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        // Función de búsqueda
+        function searchHydrant(query) {
+            if (!query || query.length < 1) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            query = query.toUpperCase();
+            const results = hydrantsData.filter(h => 
+                h.codigo.includes(query)
+            ).slice(0, 20); // Limitar a 20 resultados
+            
+            const resultsList = document.getElementById('resultsList');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            if (results.length > 0) {
+                resultsCount.textContent = `${results.length} resultado(s) encontrado(s)`;
+                resultsList.innerHTML = results.map(h => `
+                    <div class="result-item" onclick="goToHydrant('${h.codigo}', ${h.lat}, ${h.lng})">
+                        <div class="result-icon">H</div>
+                        <div class="result-info">
+                            <div class="result-code">${h.codigo}</div>
+                            <div class="result-coords">${h.lat.toFixed(5)}, ${h.lng.toFixed(5)}</div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                    </div>
+                `).join('');
+            } else {
+                resultsCount.textContent = 'Sin resultados';
+                resultsList.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search" style="font-size:30px;color:#ddd;margin-bottom:10px;display:block;"></i>
+                        No se encontró el código "${query}"
+                    </div>
+                `;
+            }
+            
+            document.getElementById('searchResults').style.display = 'block';
+        }
+
+        // Ir a hidrante
+        function goToHydrant(codigo, lat, lng) {
+            // Restaurar icono anterior
+            if (selectedMarker) {
+                selectedMarker.setIcon(hydrantIcon);
+            }
+            
+            // Encontrar el marcador
+            const hydrant = hydrantsData.find(h => h.codigo === codigo);
+            if (hydrant && hydrant.marker) {
+                selectedMarker = hydrant.marker;
+                
+                // Zoom al hidrante
+                map.setView([lat, lng], 18);
+                
+                // Cambiar icono y abrir popup
+                setTimeout(() => {
+                    markers.zoomToShowLayer(hydrant.marker, () => {
+                        hydrant.marker.setIcon(selectedIcon);
+                        hydrant.marker.openPopup();
+                    });
+                }, 300);
+            }
+            
+            // Cerrar resultados
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('searchInput').value = codigo;
+        }
+
+        // Navegar con Google Maps
+        function navigateTo(lat, lng) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+        }
+
+        // Event Listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchHydrant(e.target.value);
+        });
+
+        document.getElementById('searchInput').addEventListener('focus', () => {
+            if (document.getElementById('searchInput').value) {
+                searchHydrant(document.getElementById('searchInput').value);
+            }
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            searchHydrant(document.getElementById('searchInput').value);
+        });
+
+        // Cerrar resultados al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container') && !e.target.closest('.search-results')) {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        });
+
+        // Panel lateral
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            document.getElementById('sidePanel').classList.add('open');
+            document.getElementById('overlay').classList.add('show');
+        });
+
+        document.getElementById('closePanel').addEventListener('click', closePanel);
+        document.getElementById('overlay').addEventListener('click', closePanel);
+
+        function closePanel() {
+            document.getElementById('sidePanel').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // Botones de zoom
+        document.getElementById('zoomInBtn').addEventListener('click', () => map.zoomIn());
+        document.getElementById('zoomOutBtn').addEventListener('click', () => map.zoomOut());
+
+        // Geolocalización
+        document.getElementById('locationBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        map.setView([lat, lng], 17);
+                        
+                        L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                html: '<div style="background:#3498db;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(52,152,219,0.5);"></div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map).bindPopup('Tu ubicación').openPopup();
+                    },
+                    (error) => {
+                        alert('No se pudo obtener tu ubicación');
+                    }
+                );
+            }
+        });
+
+        // Tecla Enter para buscar
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const results = hydrantsData.filter(h => 
+                    h.codigo.includes(document.getElementById('searchInput').value.toUpperCase())
+                );
+                if (results.length === 1) {
+                    goToHydrant(results[0].codigo, results[0].lat, results[0].lng);
+                }
+            }
+        });
     </script>
 </body>
 </html>
-'''
-
-# Guardar archivo
-with open('/home/user/index.html', 'w', encoding='utf-8') as f:
-    f.write(html_content)
-
-print("✅ Archivo HTML creado exitosamente")
-
