@@ -1,335 +1,381 @@
-<!DOCTYPE html>
+
+# Crear archivo HTML optimizado para la capa de hidrantes
+html_content = '''<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor de Hidrantes - CFU</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
-
-    /* HEADER */
-    #header {
-      background: linear-gradient(135deg, #0f3460, #16213e);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-    #header h1 { font-size: 1.2rem; color: #e94560; letter-spacing: 1px; }
-    #header span { font-size: 0.75rem; color: #aaa; }
-
-    /* BARRA DE BÚSQUEDA */
-    #search-bar {
-      background: #16213e;
-      padding: 8px 15px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      border-bottom: 1px solid #0f3460;
-      flex-wrap: wrap;
-    }
-    #search-bar input {
-      flex: 1;
-      min-width: 200px;
-      padding: 7px 12px;
-      border-radius: 20px;
-      border: 1px solid #0f3460;
-      background: #0f3460;
-      color: #fff;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    #search-bar input:focus { border-color: #e94560; }
-    #search-bar button {
-      padding: 7px 16px;
-      border-radius: 20px;
-      border: none;
-      background: #e94560;
-      color: #fff;
-      cursor: pointer;
-      font-size: 0.85rem;
-      transition: background 0.2s;
-    }
-    #search-bar button:hover { background: #c73652; }
-    #total-count {
-      font-size: 0.78rem;
-      color: #aaa;
-      white-space: nowrap;
-    }
-
-    /* CONTENIDO PRINCIPAL */
-    #main { display: flex; flex: 1; overflow: hidden; }
-
-    /* MAPA */
-    #map { flex: 1; }
-
-    /* PANEL LATERAL */
-    #panel {
-      width: 300px;
-      background: #16213e;
-      overflow-y: auto;
-      border-left: 1px solid #0f3460;
-      display: flex;
-      flex-direction: column;
-    }
-    #panel-title {
-      padding: 10px 15px;
-      background: #0f3460;
-      font-size: 0.85rem;
-      color: #e94560;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-    .item-card {
-      padding: 10px 15px;
-      border-bottom: 1px solid #0f3460;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .item-card:hover { background: #0f3460; }
-    .item-card .fid { font-weight: bold; color: #e94560; font-size: 0.9rem; }
-    .item-card .loc { font-size: 0.75rem; color: #aaa; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .item-card .diam { font-size: 0.72rem; color: #7ec8e3; margin-top: 2px; }
-
-    /* POPUP */
-    .popup-content { font-family: 'Segoe UI', sans-serif; min-width: 200px; }
-    .popup-content h3 { color: #e94560; margin-bottom: 8px; font-size: 1rem; }
-    .popup-content table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    .popup-content td { padding: 3px 5px; border-bottom: 1px solid #eee; }
-    .popup-content td:first-child { font-weight: bold; color: #555; width: 45%; }
-
-    /* LEYENDA */
-    #legend {
-      position: absolute;
-      bottom: 30px;
-      left: 10px;
-      background: rgba(22,33,62,0.95);
-      border: 1px solid #0f3460;
-      border-radius: 8px;
-      padding: 10px 14px;
-      z-index: 999;
-      font-size: 0.78rem;
-      color: #eee;
-    }
-    #legend h4 { color: #e94560; margin-bottom: 6px; font-size: 0.82rem; }
-    .legend-item { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
-    .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
-
-    /* SCROLLBAR */
-    #panel::-webkit-scrollbar { width: 5px; }
-    #panel::-webkit-scrollbar-track { background: #16213e; }
-    #panel::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 5px; }
-
-    /* MENSAJE DE ERROR */
-    .error-msg {
-      padding: 15px;
-      color: #e94560;
-      font-size: 0.85rem;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Hidrantes - CFU</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.Default.min.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .control-panel h3 {
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+        
+        .stat-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: #f9f9f9;
+            border-left: 3px solid #007bff;
+            border-radius: 3px;
+        }
+        
+        .stat-item strong {
+            color: #007bff;
+        }
+        
+        .error-item {
+            background: #ffe6e6;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .success-item {
+            background: #e6ffe6;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .warning-item {
+            background: #fff3e6;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .leaflet-popup-content {
+            font-size: 13px;
+        }
+        
+        .leaflet-popup-content p {
+            margin: 5px 0;
+        }
+        
+        .popup-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 8px;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-
-<div id="header">
-  <h1>💧 VISOR DE HIDRANTES - CFU</h1>
-  <span id="total-count">Cargando...</span>
-</div>
-
-<div id="search-bar">
-  <input type="text" id="search-input" placeholder="🔍 Buscar por código (HIA-...) o dirección..."/>
-  <button onclick="buscar()">Buscar</button>
-  <button onclick="limpiarBusqueda()" style="background:#555;">✕ Limpiar</button>
-  <span id="total-count" style="margin-left: auto;"></span>
-</div>
-
-<div id="main">
-  <div id="map"></div>
-  <div id="panel">
-    <div id="panel-title">📋 LISTA DE HIDRANTES</div>
-    <div id="lista"></div>
-  </div>
-</div>
-
-<div id="legend">
-  <h4>⬤ Diámetro (mm)</h4>
-  <div class="legend-item"><div class="legend-dot" style="background:#3498db;"></div> 100 mm</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#2ecc71;"></div> 110 mm</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;"></div> 150 mm</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f39c12;"></div> Otro</div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  // INICIALIZAR MAPA
-  const map = L.map('map').setView([-12.07, -77.0], 13);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
-
-  let allMarkers = [];
-  let geojsonData = null;
-
-  // COLOR SEGÚN DIÁMETRO
-  function getColor(diameter) {
-    if (diameter == 100) return '#3498db';
-    if (diameter == 110) return '#2ecc71';
-    if (diameter == 150) return '#e74c3c';
-    return '#f39c12';
-  }
-
-  // CREAR ÍCONO SVG
-  function createIcon(color) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-      <path d="M14 0 C6.3 0 0 6.3 0 14 C0 24.5 14 36 14 36 C14 36 28 24.5 28 14 C28 6.3 21.7 0 14 0Z" fill="${color}" stroke="white" stroke-width="2"/>
-      <text x="14" y="18" text-anchor="middle" fill="white" font-size="13" font-weight="bold">H</text>
-    </svg>`;
-    return L.divIcon({
-      html: svg,
-      className: '',
-      iconSize: [28, 36],
-      iconAnchor: [14, 36],
-      popupAnchor: [0, -36]
-    });
-  }
-
-  // CARGAR GEOJSON
-  function cargarGeoJSON(data) {
-    geojsonData = data;
-    const features = data.features || [];
+    <div id="map"></div>
     
-    if (features.length === 0) {
-      document.getElementById('total-count').textContent = '⚠️ Sin datos';
-      document.getElementById('lista').innerHTML = '<div class="error-msg">No hay hidrantes para mostrar</div>';
-      return;
-    }
-
-    document.getElementById('total-count').textContent = `Total: ${features.length} hidrantes`;
-
-    features.forEach((f, i) => {
-      try {
-        const p = f.properties || {};
-        const coords = f.geometry.coordinates;
-        
-        // CORREGIR ORDEN DE COORDENADAS: GeoJSON usa [lng, lat], Leaflet usa [lat, lng]
-        let lat = coords[1];
-        let lng = coords[0];
-
-        // Validar que sean números válidos
-        if (isNaN(lat) || isNaN(lng)) {
-          console.warn(`Coordenadas inválidas en hidrante ${i}:`, coords);
-          return;
-        }
-
-        const color = getColor(p.diameter);
-        const marker = L.marker([lat, lng], { icon: createIcon(color) });
-
-        // POPUP
-        const installDate = p.installdat ? p.installdat.split('T')[0] : 'Sin datos';
-
-        marker.bindPopup(`
-          <div class="popup-content">
-            <h3>💧 ${p.facilityid || 'Sin ID'}</h3>
-            <table>
-              <tr><td>Dirección</td><td>${p.locdesc || '-'}</td></tr>
-              <tr><td>Diámetro</td><td>${p.diameter || '-'} mm</td></tr>
-              <tr><td>Fabricante</td><td>${p.manufactur || '-'}</td></tr>
-              <tr><td>NIS</td><td>${p.nis || '-'}</td></tr>
-              <tr><td>Instalación</td><td>${installDate}</td></tr>
-              <tr><td>Razón cambio</td><td>${p.changereas || '-'}</td></tr>
-              <tr><td>Doc. cambio</td><td>${p.changedocu || '-'}</td></tr>
-              <tr><td>N° CAMAZ</td><td>${p.numbocamaz || '-'}</td></tr>
-            </table>
-          </div>
-        `, { maxWidth: 280 });
-
-        marker.addTo(map);
-
-        // TARJETA EN PANEL
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML = `
-          <div class="fid">💧 ${p.facilityid || 'Sin ID'}</div>
-          <div class="loc">${p.locdesc || 'Sin dirección'}</div>
-          <div class="diam">⌀ ${p.diameter || '-'} mm | ${p.manufactur || '-'}</div>
-        `;
-        card.addEventListener('click', () => {
-          map.setView([lat, lng], 17);
-          marker.openPopup();
-        });
-        document.getElementById('lista').appendChild(card);
-
-        allMarkers.push({ 
-          marker, 
-          lat, 
-          lng, 
-          facilityid: (p.facilityid || '').toLowerCase(), 
-          locdesc: (p.locdesc || '').toLowerCase(), 
-          card 
-        });
-      } catch (error) {
-        console.error(`Error procesando hidrante ${i}:`, error);
-      }
-    });
-  }
-
-  // BÚSQUEDA
-  function buscar() {
-    const query = document.getElementById('search-input').value.toLowerCase().trim();
-    if (!query) return;
-
-    const result = allMarkers.find(m => 
-      m.facilityid.includes(query) || m.locdesc.includes(query)
-    );
+    <div class="control-panel" id="controlPanel">
+        <h3>📊 Información del Mapa</h3>
+        <div id="stats"></div>
+    </div>
     
-    if (result) {
-      map.setView([result.lat, result.lng], 17);
-      result.marker.openPopup();
-      result.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      result.card.style.background = '#1a3a5c';
-      setTimeout(() => result.card.style.background = '', 2000);
-    } else {
-      alert('No se encontró el hidrante: ' + query);
-    }
-  }
-
-  function limpiarBusqueda() {
-    document.getElementById('search-input').value = '';
-  }
-
-  document.getElementById('search-input').addEventListener('keypress', e => {
-    if (e.key === 'Enter') buscar();
-  });
-
-  // CARGAR GEOJSON DESDE GITHUB RAW
-  const githubUrl = 'https://johanna2393.github.io/hidrante/hidrante.geojson';
-  
-  fetch(githubUrl)
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
-    .then(data => cargarGeoJSON(data))
-    .catch(error => {
-      console.error('Error cargando GeoJSON:', error);
-      document.getElementById('total-count').textContent = '⚠️ Error al cargar';
-      document.getElementById('lista').innerHTML = `
-        <div class="error-msg">
-          ⚠️ Error al cargar el archivo GeoJSON<br><br>
-          <strong>Verifica que:</strong><br>
-          • El repositorio sea público<br>
-          • La rama sea "main"<br>
-          • El archivo exista en la raíz<br><br>
-          <small>Error: ${error.message}</small>
+    <div class="legend" id="legend">
+        <h4 style="margin-bottom: 8px; color: #333;">Leyenda</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #FF6B6B;"></div>
+            <span>Hidrante</span>
         </div>
-      `;
-    });
-</script>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #4ECDC4;"></div>
+            <span>Cluster</span>
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Cargando hidrantes...</p>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.min.js"></script>
+
+    <script>
+        // Inicializar mapa
+        const map = L.map('map').setView([-12.0464, -77.0428], 12);
+        
+        // Agregar capa base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Variables de estadísticas
+        let stats = {
+            totalHidrantes: 0,
+            cargados: 0,
+            errores: 0,
+            coordenadas_invalidas: 0,
+            detalles_errores: []
+        };
+        
+        // Crear grupo de clusters
+        const markerClusterGroup = L.markerClusterGroup({
+            maxClusterRadius: 80,
+            iconCreateFunction: function(cluster) {
+                const count = cluster.getChildCount();
+                let size = 'small';
+                let color = '#4ECDC4';
+                
+                if (count > 100) {
+                    size = 'large';
+                    color = '#FF6B6B';
+                } else if (count > 50) {
+                    size = 'medium';
+                    color = '#FFA07A';
+                }
+                
+                return L.divIcon({
+                    html: `<div style="background: ${color}; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${count}</div>`,
+                    iconSize: [40, 40],
+                    className: 'cluster-icon'
+                });
+            }
+        });
+        
+        // Icono para hidrantes
+        const hidrante_icon = L.divIcon({
+            html: `<div style="background: #FF6B6B; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 12px; font-weight: bold;">H</span>
+            </div>`,
+            iconSize: [24, 24],
+            className: 'hidrante-icon'
+        });
+        
+        // Cargar GeoJSON
+        fetch('https://johanna2393.github.io/hidrante/hidrante.geojson')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                console.log('GeoJSON cargado:', data);
+                stats.totalHidrantes = data.features ? data.features.length : 0;
+                
+                if (!data.features || data.features.length === 0) {
+                    throw new Error('No hay features en el GeoJSON');
+                }
+                
+                // Procesar cada feature
+                data.features.forEach((feature, index) => {
+                    try {
+                        const geometry = feature.geometry;
+                        let coords = null;
+                        
+                        // Manejar diferentes tipos de geometría
+                        if (geometry.type === 'Point') {
+                            coords = geometry.coordinates;
+                        } else if (geometry.type === 'MultiPoint' && geometry.coordinates.length > 0) {
+                            coords = geometry.coordinates[0];
+                        }
+                        
+                        if (!coords || coords.length < 2) {
+                            stats.errores++;
+                            stats.coordenadas_invalidas++;
+                            stats.detalles_errores.push(`Feature ${index}: Coordenadas inválidas`);
+                            return;
+                        }
+                        
+                        // Validar coordenadas
+                        const lon = parseFloat(coords[0]);
+                        const lat = parseFloat(coords[1]);
+                        
+                        if (isNaN(lon) || isNaN(lat) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                            stats.errores++;
+                            stats.coordenadas_invalidas++;
+                            stats.detalles_errores.push(`Feature ${index}: Lat/Lon fuera de rango`);
+                            return;
+                        }
+                        
+                        // Crear popup
+                        let popupContent = '<div class="popup-title">🚨 Hidrante</div>';
+                        popupContent += `<p><strong>Latitud:</strong> ${lat.toFixed(6)}</p>`;
+                        popupContent += `<p><strong>Longitud:</strong> ${lon.toFixed(6)}</p>`;
+                        
+                        if (feature.properties) {
+                            Object.keys(feature.properties).forEach(key => {
+                                const value = feature.properties[key];
+                                if (value) {
+                                    popupContent += `<p><strong>${key}:</strong> ${value}</p>`;
+                                }
+                            });
+                        }
+                        
+                        // Crear marcador
+                        const marker = L.marker([lat, lon], { icon: hidrante_icon })
+                            .bindPopup(popupContent);
+                        
+                        markerClusterGroup.addLayer(marker);
+                        stats.cargados++;
+                        
+                    } catch (error) {
+                        stats.errores++;
+                        stats.detalles_errores.push(`Feature ${index}: ${error.message}`);
+                        console.error(`Error procesando feature ${index}:`, error);
+                    }
+                });
+                
+                // Agregar grupo al mapa
+                map.addLayer(markerClusterGroup);
+                
+                // Actualizar estadísticas
+                actualizarEstadisticas();
+                
+                // Ocultar loading
+                document.getElementById('loading').style.display = 'none';
+                
+            })
+            .catch(error => {
+                console.error('Error cargando GeoJSON:', error);
+                stats.detalles_errores.push(`Error general: ${error.message}`);
+                actualizarEstadisticas();
+                document.getElementById('loading').style.display = 'none';
+            });
+        
+        // Función para actualizar estadísticas
+        function actualizarEstadisticas() {
+            const statsDiv = document.getElementById('stats');
+            let html = '';
+            
+            html += `<div class="stat-item success-item">
+                <strong>✅ Total de Hidrantes:</strong> ${stats.totalHidrantes}
+            </div>`;
+            
+            html += `<div class="stat-item success-item">
+                <strong>✅ Cargados:</strong> ${stats.cargados}
+            </div>`;
+            
+            if (stats.errores > 0) {
+                html += `<div class="stat-item error-item">
+                    <strong>❌ Errores:</strong> ${stats.errores}
+                </div>`;
+            }
+            
+            if (stats.coordenadas_invalidas > 0) {
+                html += `<div class="stat-item warning-item">
+                    <strong>⚠️ Coordenadas Inválidas:</strong> ${stats.coordenadas_invalidas}
+                </div>`;
+            }
+            
+            html += `<div class="stat-item">
+                <strong>📍 Porcentaje Cargado:</strong> ${((stats.cargados / stats.totalHidrantes) * 100).toFixed(1)}%
+            </div>`;
+            
+            if (stats.detalles_errores.length > 0 && stats.detalles_errores.length <= 5) {
+                html += `<div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <strong>Detalles de Errores:</strong>
+                    <ul style="margin-left: 15px; margin-top: 5px;">`;
+                stats.detalles_errores.slice(0, 5).forEach(error => {
+                    html += `<li style="color: #dc3545; font-size: 11px;">${error}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            statsDiv.innerHTML = html;
+        }
+        
+        // Controles del mapa
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+    </script>
 </body>
 </html>
+'''
+
+# Guardar archivo
+with open('/home/user/index.html', 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print("✅ Archivo HTML creado exitosamente")
+
