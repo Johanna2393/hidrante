@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor de Hidrantes - CFU</title>
+  <title>Visor de Hidrantes</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
@@ -12,30 +13,28 @@
     /* HEADER */
     #header {
       background: linear-gradient(135deg, #0f3460, #16213e);
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 10px rgba(0,0,0,0.5);
       z-index: 1000;
     }
-    #header h1 { font-size: 1.3rem; color: #e94560; letter-spacing: 1px; }
+    #header h1 { font-size: 1.2rem; color: #e94560; letter-spacing: 1px; }
     #header span { font-size: 0.75rem; color: #aaa; }
 
     /* BARRA DE BÚSQUEDA */
     #search-bar {
       background: #16213e;
-      padding: 10px 15px;
+      padding: 8px 15px;
       display: flex;
       gap: 10px;
       align-items: center;
       border-bottom: 1px solid #0f3460;
-      flex-wrap: wrap;
     }
     #search-bar input {
       flex: 1;
-      min-width: 200px;
-      padding: 8px 12px;
+      padding: 7px 12px;
       border-radius: 20px;
       border: 1px solid #0f3460;
       background: #0f3460;
@@ -45,7 +44,7 @@
     }
     #search-bar input:focus { border-color: #e94560; }
     #search-bar button {
-      padding: 8px 16px;
+      padding: 7px 16px;
       border-radius: 20px;
       border: none;
       background: #e94560;
@@ -69,7 +68,7 @@
 
     /* PANEL LATERAL */
     #panel {
-      width: 320px;
+      width: 300px;
       background: #16213e;
       overflow-y: auto;
       border-left: 1px solid #0f3460;
@@ -77,7 +76,7 @@
       flex-direction: column;
     }
     #panel-title {
-      padding: 12px 15px;
+      padding: 10px 15px;
       background: #0f3460;
       font-size: 0.85rem;
       color: #e94560;
@@ -85,24 +84,23 @@
       letter-spacing: 1px;
     }
     .item-card {
-      padding: 12px 15px;
+      padding: 10px 15px;
       border-bottom: 1px solid #0f3460;
       cursor: pointer;
       transition: background 0.2s;
     }
     .item-card:hover { background: #0f3460; }
-    .item-card.active { background: #1a3a5c; border-left: 3px solid #e94560; }
     .item-card .fid { font-weight: bold; color: #e94560; font-size: 0.9rem; }
     .item-card .loc { font-size: 0.75rem; color: #aaa; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .item-card .diam { font-size: 0.72rem; color: #7ec8e3; margin-top: 2px; }
 
     /* POPUP */
-    .popup-content { font-family: 'Segoe UI', sans-serif; min-width: 220px; }
-    .popup-content h3 { color: #e94560; margin-bottom: 10px; font-size: 1rem; }
+    .popup-content { font-family: 'Segoe UI', sans-serif; min-width: 200px; }
+    .popup-content h3 { color: #e94560; margin-bottom: 8px; font-size: 1rem; }
     .popup-content table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    .popup-content td { padding: 4px 5px; border-bottom: 1px solid #ddd; }
-    .popup-content td:first-child { font-weight: bold; color: #333; width: 40%; background: #f0f0f0; }
-    .popup-content a { color: #0078d4; text-decoration: none; font-size: 0.8rem; margin-top: 8px; display: inline-block; }
+    .popup-content td { padding: 3px 5px; border-bottom: 1px solid #eee; }
+    .popup-content td:first-child { font-weight: bold; color: #555; width: 45%; }
+    .popup-content a { color: #0078d4; text-decoration: none; font-size: 0.8rem; }
     .popup-content a:hover { text-decoration: underline; }
 
     /* LEYENDA */
@@ -113,45 +111,32 @@
       background: rgba(22,33,62,0.95);
       border: 1px solid #0f3460;
       border-radius: 8px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       z-index: 999;
       font-size: 0.78rem;
       color: #eee;
     }
-    #legend h4 { color: #e94560; margin-bottom: 8px; font-size: 0.82rem; }
-    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .legend-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
-
-    /* LOADING */
-    .loading { text-align: center; padding: 20px; color: #7ec8e3; }
-    .spinner { border: 3px solid #0f3460; border-top: 3px solid #e94560; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #legend h4 { color: #e94560; margin-bottom: 6px; font-size: 0.82rem; }
+    .legend-item { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
 
     /* SCROLLBAR */
-    #panel::-webkit-scrollbar { width: 6px; }
+    #panel::-webkit-scrollbar { width: 5px; }
     #panel::-webkit-scrollbar-track { background: #16213e; }
     #panel::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 5px; }
-    #panel::-webkit-scrollbar-thumb:hover { background: #e94560; }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      #panel { width: 100%; max-height: 40vh; }
-      #header h1 { font-size: 1rem; }
-    }
   </style>
 </head>
 <body>
 
 <div id="header">
-  <h1>💧 VISOR DE HIDRANTES - CFU</h1>
+  <h1>💧 VISOR DE HIDRANTES</h1>
   <span id="total-count">Cargando...</span>
 </div>
 
 <div id="search-bar">
   <input type="text" id="search-input" placeholder="🔍 Buscar por código (HIA-...) o dirección..."/>
   <button onclick="buscar()">Buscar</button>
-  <button onclick="limpiarBusqueda()" style="background:#555;">✕ Limpiar</button>
-  <span id="total-count" style="margin-left: auto;"></span>
+  <button onclick="limpiarBusqueda()" style="background:#555;">✕</button>
 </div>
 
 <div id="main">
@@ -173,7 +158,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // INICIALIZAR MAPA
-  const map = L.map('map').setView([-12.07, -77.0], 13);
+  const map = L.map('map').setView([-12.07, 277.0], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -209,19 +194,12 @@
   // CARGAR GEOJSON
   function cargarGeoJSON(data) {
     geojsonData = data;
-    const features = data.features || [];
-    
-    if (features.length === 0) {
-      document.getElementById('total-count').textContent = '⚠️ Sin datos';
-      document.getElementById('lista').innerHTML = '<div style="padding:15px;color:#e94560;font-size:0.85rem;">⚠️ El archivo GeoJSON no contiene características.</div>';
-      return;
-    }
-
+    const features = data.features;
     document.getElementById('total-count').textContent = `Total: ${features.length} hidrantes`;
 
     features.forEach((f, i) => {
-      const p = f.properties || {};
-      const coords = f.geometry?.coordinates || [0, 0];
+      const p = f.properties;
+      const coords = f.geometry.coordinates;
       const lat = coords[1];
       const lng = coords[0];
       const color = getColor(p.diameter);
@@ -230,7 +208,8 @@
 
       // POPUP
       const installDate = p.installdat ? p.installdat.split('T')[0] : 'Sin datos';
-      
+      const mapsLink = p.maps ? `<a href="${p.maps.match(/href="([^"]+)"/)?.[1] || '#'}" target="_blank">📍 Ver en Google Maps</a>` : '';
+
       marker.bindPopup(`
         <div class="popup-content">
           <h3>💧 ${p.facilityid || 'Sin ID'}</h3>
@@ -244,8 +223,9 @@
             <tr><td>Doc. cambio</td><td>${p.changedocu || '-'}</td></tr>
             <tr><td>N° CAMAZ</td><td>${p.numbocamaz || '-'}</td></tr>
           </table>
+          <br>${mapsLink}
         </div>
-      `, { maxWidth: 300 });
+      `, { maxWidth: 280 });
 
       marker.addTo(map);
 
@@ -258,89 +238,49 @@
         <div class="diam">⌀ ${p.diameter || '-'} mm | ${p.manufactur || '-'}</div>
       `;
       card.addEventListener('click', () => {
-        // Remover clase active de todas las tarjetas
-        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        
         map.setView([lat, lng], 17);
         marker.openPopup();
       });
       document.getElementById('lista').appendChild(card);
 
-      allMarkers.push({ 
-        marker, 
-        lat, 
-        lng, 
-        facilityid: (p.facilityid || '').toLowerCase(), 
-        locdesc: (p.locdesc || '').toLowerCase(), 
-        card,
-        properties: p
-      });
+      allMarkers.push({ marker, lat, lng, facilityid: (p.facilityid || '').toLowerCase(), locdesc: (p.locdesc || '').toLowerCase(), card });
     });
   }
 
   // BÚSQUEDA
   function buscar() {
     const query = document.getElementById('search-input').value.toLowerCase().trim();
-    if (!query) {
-      alert('Por favor ingresa un código o dirección');
-      return;
-    }
+    if (!query) return;
 
-    const result = allMarkers.find(m => 
-      m.facilityid.includes(query) || m.locdesc.includes(query)
-    );
-    
+    const result = allMarkers.find(m => m.facilityid.includes(query) || m.locdesc.includes(query));
     if (result) {
-      document.querySelectorAll('.item-card').forEach(c => c.classList.remove('active'));
-      result.card.classList.add('active');
-      
       map.setView([result.lat, result.lng], 17);
       result.marker.openPopup();
       result.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      result.card.style.background = '#1a3a5c';
+      setTimeout(() => result.card.style.background = '', 2000);
     } else {
-      alert('❌ No se encontró el hidrante: ' + query);
+      alert('No se encontró el hidrante: ' + query);
     }
   }
 
   function limpiarBusqueda() {
     document.getElementById('search-input').value = '';
-    document.querySelectorAll('.item-card').forEach(c => c.classList.remove('active'));
   }
 
   document.getElementById('search-input').addEventListener('keypress', e => {
     if (e.key === 'Enter') buscar();
   });
 
-  // CARGAR DESDE GITHUB RAW (REEMPLAZA CON TU USUARIO Y RAMA)
-  // Formato: https://raw.githubusercontent.com/USUARIO/REPOSITORIO/RAMA/hidrante.geojson
-  const githubUrl = 'https://johanna2393.github.io/hidrante/hidrante.geojson';
-
-  document.getElementById('lista').innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando hidrantes...</p></div>';
-
-  fetch(githubUrl)
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
+  // =============================================
+  // REEMPLAZA ESTO CON TU ARCHIVO hidrante.geojson
+  // =============================================
+  fetch('hidrante.geojson')
+    .then(r => r.json())
     .then(data => cargarGeoJSON(data))
-    .catch(error => {
-      console.error('Error cargando GeoJSON:', error);
-      document.getElementById('total-count').textContent = '⚠️ Error al cargar';
-      document.getElementById('lista').innerHTML = `
-        <div style="padding:15px;color:#e94560;font-size:0.85rem;">
-          <p>⚠️ Error al cargar el archivo GeoJSON</p>
-          <p style="margin-top:10px;font-size:0.75rem;color:#aaa;">
-            Verifica que:<br>
-            • El repositorio sea público<br>
-            • La rama sea "main" o "master"<br>
-            • El archivo exista en la raíz
-          </p>
-          <p style="margin-top:10px;color:#7ec8e3;font-size:0.75rem;">
-            Error: ${error.message}
-          </p>
-        </div>
-      `;
+    .catch(() => {
+      document.getElementById('total-count').textContent = '⚠️ Carga hidrante.geojson';
+      document.getElementById('lista').innerHTML = '<div style="padding:15px;color:#e94560;font-size:0.85rem;">⚠️ No se encontró el archivo <b>hidrante.geojson</b>.<br><br>Asegúrate de subir ambos archivos juntos a GitHub.</div>';
     });
 </script>
 </body>
