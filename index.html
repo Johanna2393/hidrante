@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor de Hidrantes</title>
+  <title>Visor de Hidrantes - CFU</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
@@ -31,9 +30,11 @@
       gap: 10px;
       align-items: center;
       border-bottom: 1px solid #0f3460;
+      flex-wrap: wrap;
     }
     #search-bar input {
       flex: 1;
+      min-width: 200px;
       padding: 7px 12px;
       border-radius: 20px;
       border: 1px solid #0f3460;
@@ -100,8 +101,6 @@
     .popup-content table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
     .popup-content td { padding: 3px 5px; border-bottom: 1px solid #eee; }
     .popup-content td:first-child { font-weight: bold; color: #555; width: 45%; }
-    .popup-content a { color: #0078d4; text-decoration: none; font-size: 0.8rem; }
-    .popup-content a:hover { text-decoration: underline; }
 
     /* LEYENDA */
     #legend {
@@ -124,19 +123,28 @@
     #panel::-webkit-scrollbar { width: 5px; }
     #panel::-webkit-scrollbar-track { background: #16213e; }
     #panel::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 5px; }
+
+    /* MENSAJE DE ERROR */
+    .error-msg {
+      padding: 15px;
+      color: #e94560;
+      font-size: 0.85rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
 <div id="header">
-  <h1>💧 VISOR DE HIDRANTES</h1>
+  <h1>💧 VISOR DE HIDRANTES - CFU</h1>
   <span id="total-count">Cargando...</span>
 </div>
 
 <div id="search-bar">
   <input type="text" id="search-input" placeholder="🔍 Buscar por código (HIA-...) o dirección..."/>
   <button onclick="buscar()">Buscar</button>
-  <button onclick="limpiarBusqueda()" style="background:#555;">✕</button>
+  <button onclick="limpiarBusqueda()" style="background:#555;">✕ Limpiar</button>
+  <span id="total-count" style="margin-left: auto;"></span>
 </div>
 
 <div id="main">
@@ -158,7 +166,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // INICIALIZAR MAPA
-  const map = L.map('map').setView([-12.07, 277.0], 13);
+  const map = L.map('map').setView([-12.07, -77.0], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -194,56 +202,80 @@
   // CARGAR GEOJSON
   function cargarGeoJSON(data) {
     geojsonData = data;
-    const features = data.features;
+    const features = data.features || [];
+    
+    if (features.length === 0) {
+      document.getElementById('total-count').textContent = '⚠️ Sin datos';
+      document.getElementById('lista').innerHTML = '<div class="error-msg">No hay hidrantes para mostrar</div>';
+      return;
+    }
+
     document.getElementById('total-count').textContent = `Total: ${features.length} hidrantes`;
 
     features.forEach((f, i) => {
-      const p = f.properties;
-      const coords = f.geometry.coordinates;
-      const lat = coords[1];
-      const lng = coords[0];
-      const color = getColor(p.diameter);
+      try {
+        const p = f.properties || {};
+        const coords = f.geometry.coordinates;
+        
+        // CORREGIR ORDEN DE COORDENADAS: GeoJSON usa [lng, lat], Leaflet usa [lat, lng]
+        let lat = coords[1];
+        let lng = coords[0];
 
-      const marker = L.marker([lat, lng], { icon: createIcon(color) });
+        // Validar que sean números válidos
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn(`Coordenadas inválidas en hidrante ${i}:`, coords);
+          return;
+        }
 
-      // POPUP
-      const installDate = p.installdat ? p.installdat.split('T')[0] : 'Sin datos';
-      const mapsLink = p.maps ? `<a href="${p.maps.match(/href="([^"]+)"/)?.[1] || '#'}" target="_blank">📍 Ver en Google Maps</a>` : '';
+        const color = getColor(p.diameter);
+        const marker = L.marker([lat, lng], { icon: createIcon(color) });
 
-      marker.bindPopup(`
-        <div class="popup-content">
-          <h3>💧 ${p.facilityid || 'Sin ID'}</h3>
-          <table>
-            <tr><td>Dirección</td><td>${p.locdesc || '-'}</td></tr>
-            <tr><td>Diámetro</td><td>${p.diameter || '-'} mm</td></tr>
-            <tr><td>Fabricante</td><td>${p.manufactur || '-'}</td></tr>
-            <tr><td>NIS</td><td>${p.nis || '-'}</td></tr>
-            <tr><td>Instalación</td><td>${installDate}</td></tr>
-            <tr><td>Razón cambio</td><td>${p.changereas || '-'}</td></tr>
-            <tr><td>Doc. cambio</td><td>${p.changedocu || '-'}</td></tr>
-            <tr><td>N° CAMAZ</td><td>${p.numbocamaz || '-'}</td></tr>
-          </table>
-          <br>${mapsLink}
-        </div>
-      `, { maxWidth: 280 });
+        // POPUP
+        const installDate = p.installdat ? p.installdat.split('T')[0] : 'Sin datos';
 
-      marker.addTo(map);
+        marker.bindPopup(`
+          <div class="popup-content">
+            <h3>💧 ${p.facilityid || 'Sin ID'}</h3>
+            <table>
+              <tr><td>Dirección</td><td>${p.locdesc || '-'}</td></tr>
+              <tr><td>Diámetro</td><td>${p.diameter || '-'} mm</td></tr>
+              <tr><td>Fabricante</td><td>${p.manufactur || '-'}</td></tr>
+              <tr><td>NIS</td><td>${p.nis || '-'}</td></tr>
+              <tr><td>Instalación</td><td>${installDate}</td></tr>
+              <tr><td>Razón cambio</td><td>${p.changereas || '-'}</td></tr>
+              <tr><td>Doc. cambio</td><td>${p.changedocu || '-'}</td></tr>
+              <tr><td>N° CAMAZ</td><td>${p.numbocamaz || '-'}</td></tr>
+            </table>
+          </div>
+        `, { maxWidth: 280 });
 
-      // TARJETA EN PANEL
-      const card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML = `
-        <div class="fid">💧 ${p.facilityid || 'Sin ID'}</div>
-        <div class="loc">${p.locdesc || 'Sin dirección'}</div>
-        <div class="diam">⌀ ${p.diameter || '-'} mm | ${p.manufactur || '-'}</div>
-      `;
-      card.addEventListener('click', () => {
-        map.setView([lat, lng], 17);
-        marker.openPopup();
-      });
-      document.getElementById('lista').appendChild(card);
+        marker.addTo(map);
 
-      allMarkers.push({ marker, lat, lng, facilityid: (p.facilityid || '').toLowerCase(), locdesc: (p.locdesc || '').toLowerCase(), card });
+        // TARJETA EN PANEL
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `
+          <div class="fid">💧 ${p.facilityid || 'Sin ID'}</div>
+          <div class="loc">${p.locdesc || 'Sin dirección'}</div>
+          <div class="diam">⌀ ${p.diameter || '-'} mm | ${p.manufactur || '-'}</div>
+        `;
+        card.addEventListener('click', () => {
+          map.setView([lat, lng], 17);
+          marker.openPopup();
+        });
+        document.getElementById('lista').appendChild(card);
+
+        allMarkers.push({ 
+          marker, 
+          lat, 
+          lng, 
+          facilityid: (p.facilityid || '').toLowerCase(), 
+          locdesc: (p.locdesc || '').toLowerCase(), 
+          card 
+        });
+      } catch (error) {
+        console.error(`Error procesando hidrante ${i}:`, error);
+      }
     });
   }
 
@@ -252,7 +284,10 @@
     const query = document.getElementById('search-input').value.toLowerCase().trim();
     if (!query) return;
 
-    const result = allMarkers.find(m => m.facilityid.includes(query) || m.locdesc.includes(query));
+    const result = allMarkers.find(m => 
+      m.facilityid.includes(query) || m.locdesc.includes(query)
+    );
+    
     if (result) {
       map.setView([result.lat, result.lng], 17);
       result.marker.openPopup();
@@ -272,15 +307,28 @@
     if (e.key === 'Enter') buscar();
   });
 
-  // =============================================
-  // REEMPLAZA ESTO CON TU ARCHIVO hidrante.geojson
-  // =============================================
-  fetch('hidrante.geojson')
-    .then(r => r.json())
+  // CARGAR GEOJSON DESDE GITHUB RAW
+  const githubUrl = 'https://raw.githubusercontent.com/Johanna2393/hidrante/main/hidrante.geojson';
+  
+  fetch(githubUrl)
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then(data => cargarGeoJSON(data))
-    .catch(() => {
-      document.getElementById('total-count').textContent = '⚠️ Carga hidrante.geojson';
-      document.getElementById('lista').innerHTML = '<div style="padding:15px;color:#e94560;font-size:0.85rem;">⚠️ No se encontró el archivo <b>hidrante.geojson</b>.<br><br>Asegúrate de subir ambos archivos juntos a GitHub.</div>';
+    .catch(error => {
+      console.error('Error cargando GeoJSON:', error);
+      document.getElementById('total-count').textContent = '⚠️ Error al cargar';
+      document.getElementById('lista').innerHTML = `
+        <div class="error-msg">
+          ⚠️ Error al cargar el archivo GeoJSON<br><br>
+          <strong>Verifica que:</strong><br>
+          • El repositorio sea público<br>
+          • La rama sea "main"<br>
+          • El archivo exista en la raíz<br><br>
+          <small>Error: ${error.message}</small>
+        </div>
+      `;
     });
 </script>
 </body>
