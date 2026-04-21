@@ -2,766 +2,424 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visor Hidrantes Lima</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Hidrantes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        
-        #map { width: 100%; height: 100vh; }
-        
-        /* Barra superior */
-        .top-bar {
-            position: fixed;
-            top: 10px;
-            left: 50px;
-            right: 50px;
-            z-index: 1000;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        #searchInput {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            outline: none;
-        }
-        
-        .btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 25px;
-            background: #e53935;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-        
-        .btn:hover {
-            background: #c62828;
-            transform: scale(1.05);
-        }
-        
-        .btn:active { 
-            background: #b71c1c;
-            transform: scale(0.98);
-        }
-        
-        .toggle-btn {
-            background: #1976d2;
-            padding: 12px 14px;
-            font-size: 18px;
-        }
-        
-        .toggle-btn:hover {
-            background: #1565c0;
-        }
-        
-        /* Panel de Filtros */
-        .filters-panel {
-            position: fixed;
-            top: 60px;
-            left: 10px;
-            width: 320px;
-            max-height: calc(100vh - 100px);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 999;
-            overflow-y: auto;
-            padding: 16px;
-            transition: all 0.3s ease;
-            transform: translateX(0);
-        }
-        
-        .filters-panel.hidden {
-            transform: translateX(-350px);
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e53935;
-        }
-        
-        .filters-header h3 {
-            color: #e53935;
-            font-size: 16px;
+        * {
             margin: 0;
-        }
-        
-        .close-filters {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #666;
             padding: 0;
-            width: 24px;
-            height: 24px;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .controls {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            justify-content: center;
-        }
-        
-        .close-filters:hover {
-            color: #e53935;
-        }
-        
-        .filter-group {
-            margin-bottom: 16px;
-        }
-        
-        .filter-group label {
-            display: block;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-        
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        .filter-group select:focus,
-        .filter-group input:focus {
-            border-color: #e53935;
-            box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
-        }
-        
-        .filter-buttons {
-            display: flex;
             gap: 8px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #eee;
         }
-        
-        .filter-buttons button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-        
-        .apply-filters {
-            background: #e53935;
+        .btn-primary {
+            background: #667eea;
             color: white;
         }
-        
-        .apply-filters:hover {
-            background: #c62828;
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
-        
-        .reset-filters {
-            background: #f5f5f5;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-        
-        .reset-filters:hover {
-            background: #eeeeee;
-        }
-        
-        .stats-box {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 12px;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .stats-box div {
-            margin: 4px 0;
-        }
-        
-        .stats-box strong {
-            color: #e53935;
-        }
-        
-        /* Resultados de búsqueda */
-        #results {
-            position: fixed;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 400px;
-            max-height: 300px;
-            overflow-y: auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-            display: none;
-        }
-        
-        .result-item {
-            padding: 12px 16px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .result-item:hover {
-            background: #f5f5f5;
-        }
-        
-        .result-id { 
-            font-weight: bold; 
-            color: #e53935; 
-            font-size: 14px;
-        }
-        
-        .result-loc { 
-            font-size: 12px; 
-            color: #666; 
-            margin-top: 2px; 
-        }
-        
-        /* Botón de carga */
-        #loadBtn {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            font-size: 16px;
-            z-index: 1000;
-        }
-        
-        #fileInput { 
-            display: none; 
-        }
-        
-        /* Estado */
-        #status {
-            position: fixed;
-            bottom: 90px;
-            left: 20px;
-            right: 20px;
-            padding: 12px;
-            background: #333;
+        .btn-location {
+            background: #4CAF50;
             color: white;
-            border-radius: 8px;
-            text-align: center;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .leaflet-popup-content-wrapper {
-            border-radius: 12px;
-        }
-        
-        .popup-content h3 {
-            color: #e53935;
-            margin-bottom: 10px;
             font-size: 18px;
+            padding: 10px 15px;
         }
-        
-        .popup-content table {
-            width: 100%;
+        .btn-location:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        .status {
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+            min-width: 200px;
+        }
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+        .filter-item select {
+            padding: 8px 12px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        .filter-item select:hover {
+            border-color: #764ba2;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        .filter-item select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        #map {
+            flex: 1;
+            position: relative;
+        }
+        .leaflet-popup-content {
             font-size: 13px;
         }
-        
-        .popup-content td {
-            padding: 4px 0;
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
         }
-        
-        .popup-content td:first-child {
-            color: #666;
-            width: 90px;
+        .info-box p {
+            margin: 8px 0;
+            line-height: 1.4;
         }
-        
-        .nav-btn {
-            display: block;
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-            background: #4285f4;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 14px;
+        .info-box strong {
+            color: #667eea;
         }
-        
-        .hydrant-icon {
-            background: #e53935;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        /* Scroll personalizado */
-        .filters-panel::-webkit-scrollbar,
-        #results::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .filters-panel::-webkit-scrollbar-track,
-        #results::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        .filters-panel::-webkit-scrollbar-thumb,
-        #results::-webkit-scrollbar-thumb {
-            background: #e53935;
-            border-radius: 10px;
-        }
-        
-        .filters-panel::-webkit-scrollbar-thumb:hover,
-        #results::-webkit-scrollbar-thumb:hover {
-            background: #c62828;
+        .filter-counter {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    
-    <!-- Barra superior -->
-    <div class="top-bar">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar por código (HIA-1266) o ubicación...">
-        <button class="btn toggle-btn" id="toggleFilters" title="Mostrar/Ocultar Filtros">⚙️</button>
+    <div class="container">
+        <div class="header">
+            <h1>🚒 Visor de Hidrantes</h1>
+            <p>Mapa interactivo de ubicación de hidrantes</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-location" id="btnLocation" title="Detectar mi ubicación">📍</button>
+            <button class="btn-primary" id="btnLoad">📥 Cargar Hidrantes desde GitHub</button>
+            
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="filterMarca">Filtrar por Marca:</label>
+                    <select id="filterMarca">
+                        <option value="">-- Todas las marcas --</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="filterBocamaza">Filtrar por Bocamaza:</label>
+                    <select id="filterBocamaza">
+                        <option value="">-- Todas las bocamazas --</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-counter" id="filterCounter">0 hidrantes visibles</div>
+            <div class="status" id="status">Listo para cargar datos</div>
+        </div>
+        
+        <div id="map"></div>
     </div>
-    
-    <!-- Panel de Filtros -->
-    <div class="filters-panel" id="filtersPanel">
-        <div class="filters-header">
-            <h3>🔧 Filtros</h3>
-            <button class="close-filters" id="closeFilters">✕</button>
-        </div>
-        
-        <div class="filter-group">
-            <label for="manufacturerFilter">Fabricante:</label>
-            <select id="manufacturerFilter">
-                <option value="">Todos</option>
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="diameterFilter">Diámetro (mm):</label>
-            <select id="diameterFilter">
-                <option value="">Todos</option>
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="nozzlesFilter">Bocas de Incendio:</label>
-            <select id="nozzlesFilter">
-                <option value="">Todos</option>
-                <option value="0">0</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-            </select>
-        </div>
-        
-        <div class="stats-box" id="statsBox">
-            <div>Total: <strong>0</strong></div>
-            <div>Visibles: <strong>0</strong></div>
-        </div>
-        
-        <div class="filter-buttons">
-            <button class="apply-filters" id="applyFilters">Aplicar</button>
-            <button class="reset-filters" id="resetFilters">Limpiar</button>
-        </div>
-    </div>
-    
-    <!-- Resultados de búsqueda -->
-    <div id="results"></div>
-    
-    <!-- Entrada de archivo -->
-    <input type="file" id="fileInput" accept=".geojson,.json">
-    
-    <!-- Estado -->
-    <div id="status"></div>
 
     <script>
-        // Definir proyección UTM Zona 18S
-        proj4.defs("EPSG:32718", "+proj=utm +zone=18 +south +datum=WGS84 +units=m +no_defs");
-        
-        // Inicializar mapa centrado en Lima
-        const map = L.map('map').setView([-12.05, -77.03], 13);
+        // Inicializar mapa
+        const map = L.map('map').setView([4.7110, -74.0721], 12);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
         }).addTo(map);
-        
-        let markers = [];
-        let markersLayer = L.layerGroup().addTo(map);
-        let allData = [];
-        let filteredData = [];
-        
-        // Variables de filtros
-        let currentFilters = {
-            manufacturer: '',
-            diameter: '',
-            nozzles: ''
+
+        let allData = null;
+        let geoJsonLayer = null;
+        const statusDiv = document.getElementById('status');
+        const filterCounterDiv = document.getElementById('filterCounter');
+        const filterMarcaSelect = document.getElementById('filterMarca');
+        const filterBocamazaSelect = document.getElementById('filterBocamaza');
+        const GITHUB_URL = 'https://raw.githubusercontent.com/Johanna2393/hidrante/main/hidrante.geojson';
+
+        // Mapeo de campos
+        const fieldMapping = {
+            'facilityid': 'Identificador',
+            'diameter': 'Diámetro',
+            'manufactur': 'Marca',
+            'locdesc': 'Descripción',
+            'changedocu': 'Documento de sustento',
+            'numbocamaz': 'Número de Bocamaza'
         };
-        
-        // Toggle de filtros
-        document.getElementById('toggleFilters').addEventListener('click', function() {
-            const panel = document.getElementById('filtersPanel');
-            panel.classList.toggle('hidden');
-        });
-        
-        document.getElementById('closeFilters').addEventListener('click', function() {
-            document.getElementById('filtersPanel').classList.add('hidden');
-        });
-        
-        // Función para convertir UTM a LatLng
-        function utmToLatLng(x, y) {
-            try {
-                const result = proj4("EPSG:32718", "EPSG:4326", [x, y]);
-                return { lng: result[0], lat: result[1] };
-            } catch (e) {
-                console.error("Error conversión:", e);
-                return null;
+
+        const fieldsToHide = ['FID', 'qc_id', 'installdat'];
+
+        // Función para actualizar estado
+        function updateStatus(message, type = 'loading') {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+
+        // Función para obtener valores únicos de un campo
+        function getUniqueValues(data, fieldName) {
+            const values = new Set();
+            if (data && data.features) {
+                data.features.forEach(feature => {
+                    if (feature.properties && feature.properties[fieldName]) {
+                        values.add(feature.properties[fieldName]);
+                    }
+                });
             }
+            return Array.from(values).sort();
         }
-        
-        // Función para mostrar estado
-        function showStatus(msg, duration = 3000) {
-            const status = document.getElementById('status');
-            status.textContent = msg;
-            status.style.display = 'block';
-            if (duration > 0) {
-                setTimeout(() => { status.style.display = 'none'; }, duration);
-            }
-        }
-        
-        // Crear icono de hidrante
-        function createIcon() {
-            return L.divIcon({
-                className: 'hydrant-icon',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7],
-                popupAnchor: [0, -10]
-            });
-        }
-        
-        // Procesar archivo GeoJSON
-        function processGeoJSON(geojson) {
-            markersLayer.clearLayers();
-            markers = [];
-            allData = [];
-            filteredData = [];
-            
-            let loaded = 0;
-            let errors = 0;
-            const features = geojson.features || [];
-            
-            showStatus(`Procesando ${features.length} hidrantes...`, 0);
-            
-            const manufacturers = new Set();
-            const diameters = new Set();
-            
-            features.forEach((feature, index) => {
-                try {
-                    const props = feature.properties || {};
-                    const geom = feature.geometry;
-                    
-                    if (!geom || !geom.coordinates) {
-                        errors++;
-                        return;
-                    }
-                    
-                    let coords;
-                    if (geom.type === 'MultiPoint') {
-                        coords = geom.coordinates[0];
-                    } else if (geom.type === 'Point') {
-                        coords = geom.coordinates;
-                    } else {
-                        errors++;
-                        return;
-                    }
-                    
-                    if (!coords || coords.length < 2) {
-                        errors++;
-                        return;
-                    }
-                    
-                    const x = coords[0];
-                    const y = coords[1];
-                    
-                    let lat, lng;
-                    
-                    if (Math.abs(x) > 180 || Math.abs(y) > 90) {
-                        const converted = utmToLatLng(x, y);
-                        if (!converted) {
-                            errors++;
-                            return;
-                        }
-                        lat = converted.lat;
-                        lng = converted.lng;
-                    } else {
-                        lng = x;
-                        lat = y;
-                    }
-                    
-                    if (lat < -13 || lat > -11 || lng < -78 || lng > -76) {
-                        errors++;
-                        return;
-                    }
-                    
-                    const facilityId = props.facilityid || props.FACILITYID || 'Sin ID';
-                    const diameter = props.diameter || props.DIAMETER || '-';
-                    const manufacturer = props.manufactur || props.MANUFACTUR || 'Desconocido';
-                    const nis = props.nis || props.NIS || '-';
-                    const location = props.locdesc || props.LOCDESC || '-';
-                    const outlets = props.numbocamaz || props.NUMBOCAMAZ || '-';
-                    
-                    manufacturers.add(manufacturer);
-                    diameters.add(diameter);
-                    
-                    const popupContent = `
-                        <div class="popup-content">
-                            <h3>🚒 ${facilityId}</h3>
-                            <table>
-                                <tr><td>Diámetro:</td><td><b>${diameter} mm</b></td></tr>
-                                <tr><td>Fabricante:</td><td>${manufacturer}</td></tr>
-                                <tr><td>NIS:</td><td>${nis}</td></tr>
-                                <tr><td>Bocas:</td><td>${outlets}</td></tr>
-                                <tr><td>Ubicación:</td><td>${location}</td></tr>
-                            </table>
-                            <a class="nav-btn" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">
-                                🧭 Navegar con Google Maps
-                            </a>
-                        </div>
-                    `;
-                    
-                    const marker = L.marker([lat, lng], { icon: createIcon() })
-                        .bindPopup(popupContent, { maxWidth: 280 });
-                    
-                    markersLayer.addLayer(marker);
-                    
-                    allData.push({
-                        id: facilityId,
-                        location: location,
-                        lat: lat,
-                        lng: lng,
-                        marker: marker,
-                        diameter: diameter,
-                        manufacturer: manufacturer,
-                        nozzles: outlets
-                    });
-                    
-                    loaded++;
-                    
-                } catch (e) {
-                    console.error("Error en feature:", e);
-                    errors++;
-                }
-            });
-            
-            // Llenar selectores de filtros
-            const manufacturerSelect = document.getElementById('manufacturerFilter');
-            const diameterSelect = document.getElementById('diameterFilter');
-            
-            Array.from(manufacturers).sort().forEach(m => {
+
+        // Función para poblar los selectores de filtro
+        function populateFilters(data) {
+            // Limpiar opciones existentes
+            filterMarcaSelect.innerHTML = '<option value="">-- Todas las marcas --</option>';
+            filterBocamazaSelect.innerHTML = '<option value="">-- Todas las bocamazas --</option>';
+
+            // Obtener valores únicos
+            const marcas = getUniqueValues(data, 'manufactur');
+            const bocamazas = getUniqueValues(data, 'numbocamaz');
+
+            // Agregar opciones a Marca
+            marcas.forEach(marca => {
                 const option = document.createElement('option');
-                option.value = m;
-                option.textContent = m;
-                manufacturerSelect.appendChild(option);
+                option.value = marca;
+                option.textContent = marca || '(Sin especificar)';
+                filterMarcaSelect.appendChild(option);
             });
-            
-            Array.from(diameters).sort((a, b) => a - b).forEach(d => {
+
+            // Agregar opciones a Bocamaza
+            bocamazas.forEach(bocamaza => {
                 const option = document.createElement('option');
-                option.value = d;
-                option.textContent = d + ' mm';
-                diameterSelect.appendChild(option);
+                option.value = bocamaza;
+                option.textContent = bocamaza || '(Sin especificar)';
+                filterBocamazaSelect.appendChild(option);
             });
-            
-            filteredData = [...allData];
-            updateStats();
-            
-            if (loaded > 0) {
-                const bounds = markersLayer.getBounds();
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-            
-            showStatus(`✅ ${loaded} hidrantes cargados | ❌ ${errors} errores`);
-            document.getElementById('loadBtn').textContent = `🚒 ${loaded} Hidrantes`;
         }
-        
-        // Aplicar filtros
-        document.getElementById('applyFilters').addEventListener('click', function() {
-            currentFilters.manufacturer = document.getElementById('manufacturerFilter').value;
-            currentFilters.diameter = document.getElementById('diameterFilter').value;
-            currentFilters.nozzles = document.getElementById('nozzlesFilter').value;
-            
-            applyFilters();
-        });
-        
+
+        // Función para aplicar filtros y mostrar hidrantes
         function applyFilters() {
-            markersLayer.clearLayers();
-            
-            filteredData = allData.filter(item => {
-                if (currentFilters.manufacturer && item.manufacturer !== currentFilters.manufacturer) return false;
-                if (currentFilters.diameter && item.diameter != currentFilters.diameter) return false;
-                if (currentFilters.nozzles && item.nozzles != currentFilters.nozzles) return false;
-                return true;
-            });
-            
-            filteredData.forEach(item => {
-                markersLayer.addLayer(item.marker);
-            });
-            
-            updateStats();
-            
-            if (filteredData.length > 0) {
-                const bounds = markersLayer.getBounds();
-                map.fitBounds(bounds, { padding: [50, 50] });
+            if (!allData) return;
+
+            const selectedMarca = filterMarcaSelect.value;
+            const selectedBocamaza = filterBocamazaSelect.value;
+
+            // Filtrar datos
+            const filteredData = {
+                type: 'FeatureCollection',
+                features: allData.features.filter(feature => {
+                    const marca = feature.properties.manufactur || '';
+                    const bocamaza = feature.properties.numbocamaz || '';
+
+                    const marcaMatch = !selectedMarca || marca === selectedMarca;
+                    const bocamazaMatch = !selectedBocamaza || bocamaza === selectedBocamaza;
+
+                    return marcaMatch && bocamazaMatch;
+                })
+            };
+
+            // Limpiar capa anterior
+            if (geoJsonLayer) {
+                map.removeLayer(geoJsonLayer);
             }
-        }
-        
-        // Limpiar filtros
-        document.getElementById('resetFilters').addEventListener('click', function() {
-            document.getElementById('manufacturerFilter').value = '';
-            document.getElementById('diameterFilter').value = '';
-            document.getElementById('nozzlesFilter').value = '';
-            currentFilters = { manufacturer: '', diameter: '', nozzles: '' };
-            
-            markersLayer.clearLayers();
-            filteredData = [...allData];
-            filteredData.forEach(item => {
-                markersLayer.addLayer(item.marker);
-            });
-            
-            updateStats();
-            
-            if (filteredData.length > 0) {
-                const bounds = markersLayer.getBounds();
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
-        });
-        
-        // Actualizar estadísticas
-        function updateStats() {
-            const statsBox = document.getElementById('statsBox');
-            statsBox.innerHTML = `
-                <div>Total: <strong>${allData.length}</strong></div>
-                <div>Visibles: <strong>${filteredData.length}</strong></div>
-            `;
-        }
-        
-        // Manejar carga de archivo
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            showStatus('Leyendo archivo...', 0);
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const geojson = JSON.parse(event.target.result);
-                    processGeoJSON(geojson);
-                } catch (err) {
-                    showStatus('❌ Error: Archivo no válido');
-                    console.error(err);
+
+            // Agregar nueva capa GeoJSON filtrada
+            geoJsonLayer = L.geoJSON(filteredData, {
+                pointToLayer: function(feature, latlng) {
+                    return L.marker(latlng, {
+                        icon: L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/Johanna2393/hidrante/main/3304456.ico',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32],
+                            popupAnchor: [0, -32]
+                        })
+                    });
+                },
+                onEachFeature: function(feature, layer) {
+                    let popupContent = '<div class="info-box">';
+                    if (feature.properties) {
+                        for (let key in feature.properties) {
+                            if (!fieldsToHide.includes(key)) {
+                                const label = fieldMapping[key] || key;
+                                popupContent += `<p><strong>${label}:</strong> ${feature.properties[key]}</p>`;
+                            }
+                        }
+                    }
+                    popupContent += '</div>';
+                    layer.bindPopup(popupContent);
                 }
-            };
-            reader.onerror = function() {
-                showStatus('❌ Error al leer archivo');
-            };
-            reader.readAsText(file);
-        });
-        
-        // Búsqueda
-        const searchInput = document.getElementById('searchInput');
-        const resultsDiv = document.getElementById('results');
-        
-        searchInput.addEventListener('input', function() {
-            const query = this.value.toUpperCase().trim();
+            }).addTo(map);
+
+            // Actualizar contador
+            const visibleCount = filteredData.features.length;
+            filterCounterDiv.textContent = `${visibleCount} hidrante${visibleCount !== 1 ? 's' : ''} visible${visibleCount !== 1 ? 's' : ''}`;
+
+            // Ajustar vista si hay datos
+            if (filteredData.features.length > 0) {
+                const bounds = geoJsonLayer.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            }
+        }
+
+        // Función para cargar GeoJSON desde GitHub
+        async function loadGeoJSON() {
+            updateStatus('⏳ Cargando hidrantes desde GitHub...', 'loading');
             
-            if (query.length < 2) {
-                resultsDiv.style.display = 'none';
+            try {
+                console.log('Intentando cargar desde:', GITHUB_URL);
+                
+                const response = await fetch(GITHUB_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                allData = await response.json();
+                console.log('Datos cargados exitosamente:', allData);
+                
+                // Poblar filtros
+                populateFilters(allData);
+                
+                // Aplicar filtros (sin filtros activos inicialmente)
+                applyFilters();
+                
+                const count = allData.features ? allData.features.length : 0;
+                updateStatus(`✅ ${count} hidrantes cargados exitosamente`, 'success');
+                
+            } catch (error) {
+                console.error('Error al cargar GeoJSON:', error);
+                updateStatus(`❌ Error: ${error.message}`, 'error');
+                
+                // Reintentar después de 3 segundos
+                setTimeout(() => {
+                    updateStatus('🔄 Reintentando en 3 segundos...', 'loading');
+                    setTimeout(loadGeoJSON, 3000);
+                }, 1000);
+            }
+        }
+
+        // Función para detectar ubicación actual
+        function detectLocation() {
+            updateStatus('📍 Detectando tu ubicación...', 'loading');
+            
+            if (!navigator.geolocation) {
+                updateStatus('❌ Geolocalización no soportada en tu navegador', 'error');
                 return;
             }
             
-            const matches = filteredData.filter(item => 
-                item.id.toUpperCase().includes(query) ||
-                item.location.toUpperCase().includes(query)
-            ).slice(0, 20);
-            
-            if (matches.length === 0) {
-                resultsDiv.innerHTML = '<div class="result-item">No se encontraron resultados</div>';
-            } else {
-                resultsDiv.innerHTML = matches.map(item => `
-                    <div class="result-item" onclick="goToMarker('${item.id}')">
-                        <div class="result-id">🚒 ${item.id}</div>
-                        <div class="result-loc">${item.location}</div>
-                    </div>
-                `).join('');
-            }
-            
-            resultsDiv.style.display = 'block';
-        });
-        
-        // Ir a marcador
-        function goToMarker(id) {
-            const item = filteredData.find(d => d.id === id);
-            if (item) {
-                map.setView([item.lat, item.lng], 18);
-                item.marker.openPopup();
-                resultsDiv.style.display = 'none';
-                searchInput.value = id;
-            }
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Agregar marcador de ubicación actual
+                    L.marker([lat, lng], {
+                        icon: L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        })
+                    }).addTo(map).bindPopup('📍 Tu ubicación actual');
+                    
+                    // Centrar mapa
+                    map.setView([lat, lng], 15);
+                    updateStatus(`✅ Ubicación detectada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
+                },
+                function(error) {
+                    console.error('Error de geolocalización:', error);
+                    updateStatus(`❌ Error: ${error.message}`, 'error');
+                }
+            );
         }
-        
-        // Cerrar resultados al tocar fuera
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.top-bar') && !e.target.closest('#results')) {
-                resultsDiv.style.display = 'none';
-            }
-        });
-        
-        // Cargar GeoJSON desde GitHub al iniciar
-        showStatus('Cargando datos desde GitHub...', 0);
-        
-        fetch('https://raw.githubusercontent.com/Johanna2393/hidrante/main/hidrante.geojson')
-            .then(response => {
-                if (!response.ok) throw new Error('Error al descargar');
-                return response.json();
-            })
-            .then(geojson => {
-                processGeoJSON(geojson);
-            })
-            .catch(error => {
-                showStatus('❌ Error al cargar desde GitHub: ' + error.message);
-                console.error('Error:', error);
-            });
+
+        // Event listeners
+        document.getElementById('btnLoad').addEventListener('click', loadGeoJSON);
+        document.getElementById('btnLocation').addEventListener('click', detectLocation);
+        filterMarcaSelect.addEventListener('change', applyFilters);
+        filterBocamazaSelect.addEventListener('change', applyFilters);
+
+        // Cargar automáticamente al abrir
+        loadGeoJSON();
     </script>
 </body>
 </html>
