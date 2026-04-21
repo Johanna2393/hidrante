@@ -44,6 +44,13 @@
             flex-wrap: wrap;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             align-items: center;
+            max-height: 500px;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .controls.hidden {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 20px;
         }
         button {
             padding: 10px 20px;
@@ -76,6 +83,16 @@
             background: #45a049;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        .btn-hide-filters {
+            background: #f44336;
+            color: white;
+            margin-left: auto;
+        }
+        .btn-hide-filters:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
         }
         .status {
             padding: 10px 15px;
@@ -161,6 +178,30 @@
             font-size: 13px;
             font-weight: 600;
         }
+        .btn-toggle {
+            background: #764ba2;
+            color: white;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            padding: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-toggle:hover {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+        .btn-toggle.show {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -170,7 +211,7 @@
             <p>Mapa interactivo de ubicación de hidrantes</p>
         </div>
         
-        <div class="controls">
+        <div class="controls" id="controlsBar">
             <button class="btn-location" id="btnLocation" title="Detectar mi ubicación">📍</button>
             <button class="btn-primary" id="btnLoad">📥 Cargar Hidrantes desde GitHub</button>
             
@@ -192,9 +233,11 @@
             
             <div class="filter-counter" id="filterCounter">0 hidrantes visibles</div>
             <div class="status" id="status">Listo para cargar datos</div>
+            <button class="btn-hide-filters" id="btnHideFilters" title="Ocultar filtros">✕ Ocultar</button>
         </div>
         
         <div id="map"></div>
+        <button class="btn-toggle" id="btnShowFilters" title="Mostrar filtros">📊</button>
     </div>
 
     <script>
@@ -411,6 +454,21 @@
                 }
             );
         }
+
+        // Funcionalidad de ocultar/mostrar filtros
+        const controlsBar = document.getElementById('controlsBar');
+        const btnHideFilters = document.getElementById('btnHideFilters');
+        const btnShowFilters = document.getElementById('btnShowFilters');
+
+        btnHideFilters.addEventListener('click', function() {
+            controlsBar.classList.add('hidden');
+            btnShowFilters.classList.add('show');
+        });
+
+        btnShowFilters.addEventListener('click', function() {
+            controlsBar.classList.remove('hidden');
+            btnShowFilters.classList.remove('show');
+        });
 
         // Event listeners
         document.getElementById('btnLoad').addEventListener('click', loadGeoJSON);
