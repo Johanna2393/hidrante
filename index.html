@@ -217,16 +217,23 @@
             
             <div class="filter-group">
                 <div class="filter-item">
-                    <label for="filterMarca">Filtrar por Marca:</label>
-                    <select id="filterMarca">
-                        <option value="">-- Todas las marcas --</option>
+                    <label for="filterIdentificador">Filtrar por Identificador:</label>
+                    <select id="filterIdentificador">
+                        <option value="">-- Todos --</option>
                     </select>
                 </div>
                 
                 <div class="filter-item">
-                    <label for="filterBocamaza">Filtrar por Bocamaza:</label>
-                    <select id="filterBocamaza">
-                        <option value="">-- Todas las bocamazas --</option>
+                    <label for="filterNis">Filtrar por NIS:</label>
+                    <select id="filterNis">
+                        <option value="">-- Todos --</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="filterDescripcion">Filtrar por Descripción:</label>
+                    <select id="filterDescripcion">
+                        <option value="">-- Todas --</option>
                     </select>
                 </div>
             </div>
@@ -253,8 +260,9 @@
         let geoJsonLayer = null;
         const statusDiv = document.getElementById('status');
         const filterCounterDiv = document.getElementById('filterCounter');
-        const filterMarcaSelect = document.getElementById('filterMarca');
-        const filterBocamazaSelect = document.getElementById('filterBocamaza');
+        const filterIdentificadorSelect = document.getElementById('filterIdentificador');
+        const filterNisSelect = document.getElementById('filterNis');
+        const filterDescripcionSelect = document.getElementById('filterDescripcion');
         const GITHUB_URL = 'https://raw.githubusercontent.com/Johanna2393/hidrante/main/hidrante.geojson';
 
         // Mapeo de campos
@@ -290,28 +298,30 @@
 
         // Función para poblar los selectores de filtro
         function populateFilters(data) {
-            // Limpiar opciones existentes
-            filterMarcaSelect.innerHTML = '<option value="">-- Todas las marcas --</option>';
-            filterBocamazaSelect.innerHTML = '<option value="">-- Todas las bocamazas --</option>';
+            filterIdentificadorSelect.innerHTML = '<option value="">-- Todos --</option>';
+            filterNisSelect.innerHTML = '<option value="">-- Todos --</option>';
+            filterDescripcionSelect.innerHTML = '<option value="">-- Todas --</option>';
 
-            // Obtener valores únicos
-            const marcas = getUniqueValues(data, 'manufactur');
-            const bocamazas = getUniqueValues(data, 'numbocamaz');
+            const identificadores = getUniqueValues(data, 'facilityid');
+            const nises = getUniqueValues(data, 'nis');
+            const descripciones = getUniqueValues(data, 'locdesc');
 
-            // Agregar opciones a Marca
-            marcas.forEach(marca => {
-                const option = document.createElement('option');
-                option.value = marca;
-                option.textContent = marca || '(Sin especificar)';
-                filterMarcaSelect.appendChild(option);
+            identificadores.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v; o.textContent = v || '(Sin especificar)';
+                filterIdentificadorSelect.appendChild(o);
             });
 
-            // Agregar opciones a Bocamaza
-            bocamazas.forEach(bocamaza => {
-                const option = document.createElement('option');
-                option.value = bocamaza;
-                option.textContent = bocamaza || '(Sin especificar)';
-                filterBocamazaSelect.appendChild(option);
+            nises.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v; o.textContent = v || '(Sin especificar)';
+                filterNisSelect.appendChild(o);
+            });
+
+            descripciones.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v; o.textContent = v || '(Sin especificar)';
+                filterDescripcionSelect.appendChild(o);
             });
         }
 
@@ -319,20 +329,20 @@
         function applyFilters() {
             if (!allData) return;
 
-            const selectedMarca = filterMarcaSelect.value;
-            const selectedBocamaza = filterBocamazaSelect.value;
+            const selIdentificador = filterIdentificadorSelect.value;
+            const selNis = filterNisSelect.value;
+            const selDescripcion = filterDescripcionSelect.value;
 
-            // Filtrar datos
             const filteredData = {
                 type: 'FeatureCollection',
                 features: allData.features.filter(feature => {
-                    const marca = feature.properties.manufactur || '';
-                    const bocamaza = feature.properties.numbocamaz || '';
+                    const identificador = feature.properties.facilityid || '';
+                    const nis = feature.properties.nis || '';
+                    const descripcion = feature.properties.locdesc || '';
 
-                    const marcaMatch = !selectedMarca || marca === selectedMarca;
-                    const bocamazaMatch = !selectedBocamaza || bocamaza === selectedBocamaza;
-
-                    return marcaMatch && bocamazaMatch;
+                    return (!selIdentificador || identificador === selIdentificador) &&
+                           (!selNis || nis === selNis) &&
+                           (!selDescripcion || descripcion === selDescripcion);
                 })
             };
 
@@ -473,8 +483,9 @@
         // Event listeners
         document.getElementById('btnLoad').addEventListener('click', loadGeoJSON);
         document.getElementById('btnLocation').addEventListener('click', detectLocation);
-        filterMarcaSelect.addEventListener('change', applyFilters);
-        filterBocamazaSelect.addEventListener('change', applyFilters);
+        filterIdentificadorSelect.addEventListener('change', applyFilters);
+        filterNisSelect.addEventListener('change', applyFilters);
+        filterDescripcionSelect.addEventListener('change', applyFilters);
 
         // Cargar automáticamente al abrir
         loadGeoJSON();
